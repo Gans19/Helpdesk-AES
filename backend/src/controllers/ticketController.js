@@ -1,23 +1,23 @@
-const { matchedData } = require('express-validator');
-const ticketModel = require('../models/ticketModel');
-const commentModel = require('../models/commentModel');
+const { matchedData } = require("express-validator");
+const ticketModel = require("../models/ticketModel");
+const commentModel = require("../models/commentModel");
 
 const list = async (req, res, next) => {
   try {
     const filters = {
       status: req.query.status,
       priority: req.query.priority,
-      categoryId: req.query.categoryId
+      categoryId: req.query.categoryId,
     };
     const tickets = await ticketModel.listTickets({
       role: req.user.role,
       userId: req.user.id,
-      filters
+      filters,
     });
 
     return res.json({
       success: true,
-      data: tickets
+      data: tickets,
     });
   } catch (error) {
     return next(error);
@@ -32,20 +32,20 @@ const getById = async (req, res, next) => {
     if (!ticket) {
       return res.status(404).json({
         success: false,
-        message: 'Ticket not found'
+        message: "Ticket not found",
       });
     }
 
-    if (req.user.role === 'user' && ticket.user_id !== req.user.id) {
+    if (req.user.role === "user" && ticket.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have access to this ticket'
+        message: "You do not have access to this ticket",
       });
     }
 
     return res.json({
       success: true,
-      data: ticket
+      data: ticket,
     });
   } catch (error) {
     return next(error);
@@ -63,13 +63,13 @@ const create = async (req, res, next) => {
       priority: data.priority,
       categoryId: data.categoryId,
       userId: req.user.id,
-      attachment
+      attachment,
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Ticket created',
-      data: ticket
+      message: "Ticket created",
+      data: ticket,
     });
   } catch (error) {
     return next(error);
@@ -84,25 +84,34 @@ const update = async (req, res, next) => {
     if (!ticket) {
       return res.status(404).json({
         success: false,
-        message: 'Ticket not found'
+        message: "Ticket not found",
       });
     }
 
-    const data = matchedData(req, { locations: ['body'] });
+    const data = matchedData(req, {
+      locations: ["body"],
+      includeOptionals: true,
+    });
+    const rawAssignedTo = Object.prototype.hasOwnProperty.call(
+      req.body,
+      "assignedTo"
+    )
+      ? req.body.assignedTo
+      : undefined;
 
-    if (req.user.role === 'user' && ticket.user_id !== req.user.id) {
+    if (req.user.role === "user" && ticket.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'You cannot update this ticket'
+        message: "You cannot update this ticket",
       });
     }
 
     const payload = {};
-    if (req.user.role === 'user') {
-      if (ticket.status !== 'open') {
+    if (req.user.role === "user") {
+      if (ticket.status !== "open") {
         return res.status(400).json({
           success: false,
-          message: 'Ticket locked; contact support for changes'
+          message: "Ticket locked; contact support for changes",
         });
       }
       if (data.title) payload.title = data.title;
@@ -113,7 +122,11 @@ const update = async (req, res, next) => {
       if (data.description) payload.description = data.description;
       if (data.priority) payload.priority = data.priority;
       if (data.status) payload.status = data.status;
-      if (data.assignedTo !== undefined) payload.assignedTo = data.assignedTo;
+      if (rawAssignedTo === "") {
+        payload.assignedTo = null;
+      } else if (data.assignedTo !== undefined) {
+        payload.assignedTo = data.assignedTo;
+      }
       if (req.file) payload.attachment = req.file.filename;
     }
 
@@ -121,8 +134,8 @@ const update = async (req, res, next) => {
 
     return res.json({
       success: true,
-      message: 'Ticket updated',
-      data: updated
+      message: "Ticket updated",
+      data: updated,
     });
   } catch (error) {
     return next(error);
@@ -137,7 +150,7 @@ const destroy = async (req, res, next) => {
     if (!ticket) {
       return res.status(404).json({
         success: false,
-        message: 'Ticket not found'
+        message: "Ticket not found",
       });
     }
 
@@ -156,14 +169,14 @@ const listComments = async (req, res, next) => {
     if (!ticket) {
       return res.status(404).json({
         success: false,
-        message: 'Ticket not found'
+        message: "Ticket not found",
       });
     }
 
-    if (req.user.role === 'user' && ticket.user_id !== req.user.id) {
+    if (req.user.role === "user" && ticket.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have access to this ticket'
+        message: "You do not have access to this ticket",
       });
     }
 
@@ -188,7 +201,7 @@ const listComments = async (req, res, next) => {
 
     return res.json({
       success: true,
-      data: roots
+      data: roots,
     });
   } catch (error) {
     return next(error);
@@ -203,14 +216,14 @@ const addComment = async (req, res, next) => {
     if (!ticket) {
       return res.status(404).json({
         success: false,
-        message: 'Ticket not found'
+        message: "Ticket not found",
       });
     }
 
-    if (req.user.role === 'user' && ticket.user_id !== req.user.id) {
+    if (req.user.role === "user" && ticket.user_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have access to this ticket'
+        message: "You do not have access to this ticket",
       });
     }
 
@@ -220,13 +233,13 @@ const addComment = async (req, res, next) => {
       ticketId,
       userId: req.user.id,
       parentCommentId: data.parentCommentId || null,
-      body: data.body
+      body: data.body,
     });
 
     return res.status(201).json({
       success: true,
-      message: 'Comment added',
-      data: comment
+      message: "Comment added",
+      data: comment,
     });
   } catch (error) {
     return next(error);
@@ -240,6 +253,5 @@ module.exports = {
   update,
   destroy,
   listComments,
-  addComment
+  addComment,
 };
-

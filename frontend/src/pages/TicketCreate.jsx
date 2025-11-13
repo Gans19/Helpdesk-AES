@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useToast } from '../hooks/useToast';
 
 const defaultForm = {
   title: '',
@@ -12,7 +13,7 @@ const defaultForm = {
 
 const TicketCreatePage = () => {
   const navigate = useNavigate();
-  const { setNotification } = useOutletContext();
+  const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState({});
@@ -61,14 +62,11 @@ const TicketCreatePage = () => {
     try {
       setSubmitting(true);
       await api.post('/tickets', payload);
-      setNotification({
-        type: 'success',
-        message: 'Ticket created successfully'
-      });
+      toast.showSuccess('Ticket created successfully');
       navigate('/tickets');
     } catch (err) {
       const message = err.response?.data?.message || 'Failed to create ticket';
-      setNotification({ type: 'error', message });
+      toast.showError(message);
     } finally {
       setSubmitting(false);
     }

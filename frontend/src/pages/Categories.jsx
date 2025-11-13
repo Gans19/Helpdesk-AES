@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import { useOutletContext } from 'react-router-dom';
+import { useToast } from '../hooks/useToast';
 
 const emptyCategory = { name: '', description: '' };
 
 const CategoriesPage = () => {
-  const { setNotification } = useOutletContext();
+  const toast = useToast();
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyCategory);
   const [editingId, setEditingId] = useState(null);
@@ -31,19 +31,16 @@ const CategoriesPage = () => {
     try {
       if (editingId) {
         await api.put(`/categories/${editingId}`, form);
-        setNotification({ type: 'success', message: 'Category updated' });
+        toast.showSuccess('Category updated successfully');
       } else {
         await api.post('/categories', form);
-        setNotification({ type: 'success', message: 'Category created' });
+        toast.showSuccess('Category created successfully');
       }
       setForm(emptyCategory);
       setEditingId(null);
       loadCategories();
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err.response?.data?.message || 'Failed to save category'
-      });
+      toast.showError(err.response?.data?.message || 'Failed to save category');
     }
   };
 
@@ -59,13 +56,10 @@ const CategoriesPage = () => {
     if (!window.confirm('Delete this category?')) return;
     try {
       await api.delete(`/categories/${id}`);
-      setNotification({ type: 'success', message: 'Category deleted' });
+      toast.showSuccess('Category deleted successfully');
       loadCategories();
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err.response?.data?.message || 'Failed to delete category'
-      });
+      toast.showError(err.response?.data?.message || 'Failed to delete category');
     }
   };
 

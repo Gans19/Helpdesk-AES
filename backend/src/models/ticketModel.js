@@ -126,8 +126,13 @@ const recentTickets = async ({ role, userId, limit = 5 }) => {
     sql += 'WHERE t.user_id = ? ';
     params.push(userId);
   }
-  sql += 'ORDER BY t.created_at DESC LIMIT ?';
-  params.push(limit);
+
+  const numericLimit = Number.parseInt(limit, 10);
+  const safeLimit = Number.isNaN(numericLimit)
+    ? 5
+    : Math.min(Math.max(numericLimit, 1), 50);
+
+  sql += `ORDER BY t.created_at DESC LIMIT ${safeLimit}`;
   const [rows] = await pool.execute(sql, params);
   return rows;
 };

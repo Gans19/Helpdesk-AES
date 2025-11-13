@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { useParams, useOutletContext } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../providers/AuthProvider';
+import { useToast } from '../hooks/useToast';
 
 const TicketDetailPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const { setNotification } = useOutletContext();
+  const toast = useToast();
   const [ticket, setTicket] = useState(null);
   const [comments, setComments] = useState([]);
   const [statusForm, setStatusForm] = useState({ status: '', priority: '', assignedTo: '' });
@@ -34,10 +35,7 @@ const TicketDetailPage = () => {
         setLoading(true);
         await Promise.all([loadTicket(), loadComments()]);
       } catch (err) {
-        setNotification({
-          type: 'error',
-          message: err.response?.data?.message || 'Failed to load ticket'
-        });
+        toast.showError(err.response?.data?.message || 'Failed to load ticket');
       } finally {
         setLoading(false);
       }
@@ -56,13 +54,10 @@ const TicketDetailPage = () => {
   const updateTicket = async () => {
     try {
       await api.put(`/tickets/${id}`, statusForm);
-      setNotification({ type: 'success', message: 'Ticket updated' });
+      toast.showSuccess('Ticket updated successfully');
       await loadTicket();
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err.response?.data?.message || 'Failed to update ticket'
-      });
+      toast.showError(err.response?.data?.message || 'Failed to update ticket');
     }
   };
 
@@ -72,12 +67,10 @@ const TicketDetailPage = () => {
     try {
       await api.post(`/tickets/${id}/comments`, { body: commentBody });
       setCommentBody('');
+      toast.showSuccess('Comment added successfully');
       await loadComments();
     } catch (err) {
-      setNotification({
-        type: 'error',
-        message: err.response?.data?.message || 'Failed to add comment'
-      });
+      toast.showError(err.response?.data?.message || 'Failed to add comment');
     }
   };
 
@@ -126,25 +119,26 @@ const TicketDetailPage = () => {
       </header>
 
       <section className="card ticket-detail">
-        <h3>Description</h3>
-        <p>{ticket.description}</p>
+        <h3 className="ticket-detail-title">Description</h3>
+        <p className="ticket-detail-description">{ticket.description}</p>
         <div className="meta-grid">
-          <div>
-            <h4>Owner</h4>
-            <p>{ticket.owner_name}</p>
+          <div className="meta-item">
+            <h4 className="meta-label">Owner</h4>
+            <p className="meta-value">{ticket.owner_name}</p>
           </div>
-          <div>
-            <h4>Assigned to</h4>
-            <p>{ticket.assignee_name || 'Unassigned'}</p>
+          <div className="meta-item">
+            <h4 className="meta-label">Assigned to</h4>
+            <p className="meta-value">{ticket.assignee_name || 'Unassigned'}</p>
           </div>
-          <div>
-            <h4>Created</h4>
-            <p>{new Date(ticket.created_at).toLocaleString()}</p>
+          <div className="meta-item">
+            <h4 className="meta-label">Created</h4>
+            <p className="meta-value">{new Date(ticket.created_at).toLocaleString()}</p>
           </div>
-          <div>
-            <h4>Attachment</h4>
+          <div className="meta-item">
+            <h4 className="meta-label">Attachment</h4>
             {ticket.attachment ? (
               <a
+                className="meta-value meta-link"
                 href={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/${ticket.attachment}`}
                 target="_blank"
                 rel="noreferrer"
@@ -152,7 +146,7 @@ const TicketDetailPage = () => {
                 Download
               </a>
             ) : (
-              <p>None</p>
+              <p className="meta-value">None</p>
             )}
           </div>
         </div>
@@ -192,7 +186,7 @@ const TicketDetailPage = () => {
       )}
 
       <section className="card">
-        <h3>Comments</h3>
+        <h3 className="comments-title">Comments</h3>
         <ul className="comment-list">
           {comments.map((comment) => renderComment(comment))}
           {!comments.length && <li className="muted">No comments yet.</li>}
